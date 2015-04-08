@@ -8,14 +8,14 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UITableViewDataSource {
     
     // set up properties
     @IBOutlet var totalTextField: UITextField!  // ! indicates the values are optional, but they are implicitly unwrapped.
     @IBOutlet var taxPctSlider: UISlider!
     @IBOutlet var taxPctLabel : UILabel!
-    @IBOutlet var resultsTextView : UITextView!
-
+    @IBOutlet weak var tableView: UITableView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -32,19 +32,24 @@ class ViewController: UIViewController {
     // Declare callback functions from the view
     @IBAction func calculateTapped(sender: AnyObject) {
         
-        // Convert to an NSString and convert to Double
+//        // Convert to an NSString and convert to Double
+//        tipCalc.total = Double((totalTextField.text as NSString).doubleValue)
+//        
+//        let possibleTips = tipCalc.returnPossibleTips()
+//        var results = ""
+//        
+//        // Enumerate through keys and values of the dictionary at the same time.
+//        for (tipPct, tipValue) in possibleTips {
+//            // Build the string of results
+//            results += "\(tipPct)%: \(tipValue)\n"
+//        }
+//        
+//        resultsTextView.text = results
+        
         tipCalc.total = Double((totalTextField.text as NSString).doubleValue)
-        
-        let possibleTips = tipCalc.returnPossibleTips()
-        var results = ""
-        
-        // Enumerate through keys and values of the dictionary at the same time.
-        for (tipPct, tipValue) in possibleTips {
-            // Build the string of results
-            results += "\(tipPct)%: \(tipValue)\n"
-        }
-        
-        resultsTextView.text = results
+        possibleTips = tipCalc.returnPossibleTips()
+        sortedKeys = sorted(Array(possibleTips.keys))
+        tableView.reloadData()
     }
     
     @IBAction func taxPercentageChanged(sender : AnyObject) {
@@ -57,6 +62,8 @@ class ViewController: UIViewController {
     }
     
     let tipCalc = TipCalculatorModel(total: 33.25, taxPct: 0.06)
+    var possibleTips = Dictionary<Int, (tipAmt:Double, total:Double)>()
+    var sortedKeys:[Int] = []
     
     func refreshUI() {
         // Convert total from a Double to a String
@@ -69,7 +76,24 @@ class ViewController: UIViewController {
         taxPctLabel.text = "Tax Percentage (\(Int(taxPctSlider.value))%)"
         
         // Clear the results text until the user taps the calculate button
-        resultsTextView.text = ""
+//        resultsTextView.text = ""
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return sortedKeys.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: UITableViewCellStyle.Value2, reuseIdentifier: nil)
+        
+        let tipPct = sortedKeys[indexPath.row]
+        
+        let tipAmt = possibleTips[tipPct]!.tipAmt  // force unwrapping (with !) since we are sure the dictionary contains a value for this key
+        let total = possibleTips[tipPct]!.total
+        
+        cell.textLabel?.text = "\(tipPct)%:"
+        cell.detailTextLabel?.text = String(format: "Tip: $%0.2f, Total: $%0.2f", tipAmt, total)
+        return cell
     }
 
 }
